@@ -18,7 +18,11 @@ function App() {
                 className="flex flex-col justify-center items-center gap-4 w-[512px] h-40 border-dashed border-2 rounded-lg"
                 {...getRootProps()}
             >
-                {isDragActive ? null : (
+                {isDragActive ? (
+                    <span className="text-muted-foreground text-xl">
+                        松开鼠标以上传图片
+                    </span>
+                ) : (
                     <>
                         <Input
                             id="picture"
