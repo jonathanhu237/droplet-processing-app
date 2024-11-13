@@ -3,6 +3,7 @@ import { useCallback, useState } from "react";
 import { useDropzone } from "react-dropzone";
 import { Input } from "./components/ui/input";
 import { Label } from "./components/ui/label";
+import { Button } from "./components/ui/button";
 
 function App() {
     const [files, setFiles] = useState<File[]>([]);
@@ -18,6 +19,10 @@ function App() {
         },
         multiple: true,
     });
+
+    const removeFile = (index: number) => {
+        setFiles((prevFiles) => prevFiles.filter((_, i) => i !== index));
+    };
 
     return (
         <div className="h-screen flex flex-col items-center justify-center">
@@ -84,6 +89,15 @@ function App() {
                                         MB
                                     </span>
                                 </div>
+                            </div>
+                            <div className="ml-auto flex gap-2">
+                                <Button>计算</Button>
+                                <Button
+                                    variant="destructive"
+                                    onClick={() => removeFile(index)}
+                                >
+                                    删除
+                                </Button>
                             </div>
                         </li>
                     ))}
