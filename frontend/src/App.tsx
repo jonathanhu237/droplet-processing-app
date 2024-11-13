@@ -4,6 +4,7 @@ import { useDropzone } from "react-dropzone";
 import { Input } from "./components/ui/input";
 import { Label } from "./components/ui/label";
 import { Button } from "./components/ui/button";
+import { toast } from "sonner";
 
 type FileWithSpotSize = File & { averageSpotSize?: number };
 
@@ -24,6 +25,39 @@ function App() {
 
     const removeFile = (index: number) => {
         setFiles((prevFiles) => prevFiles.filter((_, i) => i !== index));
+    };
+    const calculate = async (file: FileWithSpotSize, index: number) => {
+        const formData = new FormData();
+        formData.append("file", file);
+
+        try {
+            const response = await fetch(
+                "http://127.0.0.1:8000/analyze-spots/",
+                {
+                    method: "POST",
+                    headers: {
+                        accept: "application/json",
+                    },
+                    body: formData,
+                }
+            );
+
+            if (!response.ok) {
+                toast("请求失败");
+            }
+
+            const data = await response.json();
+
+            setFiles((prevFiles) =>
+                prevFiles.map((f, i) =>
+                    i === index
+                        ? { ...f, averageSpotSize: data.average_spot_size }
+                        : f
+                )
+            );
+        } catch {
+            toast("计算失败，请重新点击计算按钮");
+        }
     };
 
     return (
@@ -99,7 +133,9 @@ function App() {
                                     : file.averageSpotSize}
                             </span>
                             <div className="ml-auto flex gap-2">
-                                <Button>计算</Button>
+                                <Button onClick={() => calculate(file, index)}>
+                                    计算
+                                </Button>
                                 <Button
                                     variant="destructive"
                                     onClick={() => removeFile(index)}
