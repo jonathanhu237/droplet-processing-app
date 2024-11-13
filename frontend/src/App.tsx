@@ -1,8 +1,8 @@
 import { IconUpload } from "@tabler/icons-react";
-import { Input } from "./components/ui/input";
-import { Label } from "./components/ui/label";
 import { useCallback } from "react";
 import { useDropzone } from "react-dropzone";
+import { Input } from "./components/ui/input";
+import { Label } from "./components/ui/label";
 
 function App() {
     const onDrop = useCallback((acceptedFiles: unknown) => {
