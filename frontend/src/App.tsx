@@ -1,7 +1,5 @@
-import UploadFile from "./components/upload-file";
-
 function App() {
-    return <UploadFile />;
+    return <div>Hello, world!</div>;
 }
 
 export default App;
