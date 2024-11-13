@@ -1,19 +1,32 @@
 import { IconUpload } from "@tabler/icons-react";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useDropzone } from "react-dropzone";
 import { Input } from "./components/ui/input";
 import { Label } from "./components/ui/label";
 import { Button } from "./components/ui/button";
 import { toast } from "sonner";
+import { Loader2 } from "lucide-react";
 
-type FileWithSpotSize = File & { averageSpotSize?: number };
+type FileWithSpotSize = File & {
+    averageSpotSize: number | undefined;
+    previewUrl: string;
+    isCalculating: boolean;
+};
 
 function App() {
     const [files, setFiles] = useState<FileWithSpotSize[]>([]);
 
     const onDrop = useCallback((acceptedFiles: File[]) => {
-        setFiles((prevFiles) => [...prevFiles, ...acceptedFiles]);
+        const filesWithPreview = acceptedFiles.map((file) => {
+            return Object.assign(file, {
+                averageSpotSize: undefined,
+                previewUrl: URL.createObjectURL(file),
+                isCalculating: false,
+            });
+        });
+        setFiles((prevFiles) => [...prevFiles, ...filesWithPreview]);
     }, []);
+
     const { getRootProps, getInputProps, isDragActive } = useDropzone({
         onDrop,
         accept: {
@@ -23,10 +36,30 @@ function App() {
         multiple: true,
     });
 
+    useEffect(() => {
+        return () => {
+            files.forEach((file) => {
+                if (file.previewUrl) {
+                    URL.revokeObjectURL(file.previewUrl);
+                }
+            });
+        };
+    }, [files]);
+
     const removeFile = (index: number) => {
         setFiles((prevFiles) => prevFiles.filter((_, i) => i !== index));
     };
+
     const calculate = async (file: FileWithSpotSize, index: number) => {
+        setFiles((prevFiles) =>
+            prevFiles.map((f, i) => {
+                if (i === index) {
+                    return Object.assign(f, { isCalculating: true });
+                }
+                return f;
+            })
+        );
+
         const formData = new FormData();
         formData.append("file", file);
 
@@ -49,14 +82,26 @@ function App() {
             const data = await response.json();
 
             setFiles((prevFiles) =>
-                prevFiles.map((f, i) =>
-                    i === index
-                        ? { ...f, averageSpotSize: data.average_spot_size }
-                        : f
-                )
+                prevFiles.map((f, i) => {
+                    if (i === index) {
+                        return Object.assign(f, {
+                            averageSpotSize: data.average_spot_size,
+                        });
+                    }
+                    return f;
+                })
             );
         } catch {
             toast("计算失败，请重新点击计算按钮");
+        } finally {
+            setFiles((prevFiles) =>
+                prevFiles.map((f, i) => {
+                    if (i === index) {
+                        return Object.assign(f, { isCalculating: false });
+                    }
+                    return f;
+                })
+            );
         }
     };
 
@@ -102,7 +147,7 @@ function App() {
                             className="flex items-center gap-4 rounded-lg border-2 p-2"
                         >
                             <img
-                                src={URL.createObjectURL(file)}
+                                src={file.previewUrl}
                                 alt={file.name}
                                 className="w-20 rounded-sm"
                             />
@@ -133,9 +178,18 @@ function App() {
                                     : file.averageSpotSize}
                             </span>
                             <div className="ml-auto flex gap-2">
-                                <Button onClick={() => calculate(file, index)}>
-                                    计算
-                                </Button>
+                                {file.isCalculating ? (
+                                    <Button disabled>
+                                        <Loader2 className="animate-spin" />
+                                        请稍等
+                                    </Button>
+                                ) : (
+                                    <Button
+                                        onClick={() => calculate(file, index)}
+                                    >
+                                        计算
+                                    </Button>
+                                )}
                                 <Button
                                     variant="destructive"
                                     onClick={() => removeFile(index)}
