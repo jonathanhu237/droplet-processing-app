@@ -1,23 +1,33 @@
 import cv2
 import numpy as np
+from fastapi import FastAPI, UploadFile
+
+app = FastAPI()
 
 
-def calculate_average_spot_size(image_path):
-    image = cv2.imread(image_path)
-    if image is None:
-        print("Error: Could not read the image.")
-        return
+def calculate_average_spot_size(image_data):
+    # 将上传的数据转换为图像
+    np_img = np.frombuffer(image_data, np.uint8)
+    image = cv2.imdecode(np_img, cv2.IMREAD_GRAYSCALE)
 
-    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-    _, binary = cv2.threshold(gray, 127, 255, cv2.THRESH_BINARY_INV)
+    # 二值化图像
+    _, binary = cv2.threshold(image, 127, 255, cv2.THRESH_BINARY_INV)
     contours, _ = cv2.findContours(binary, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+    # 计算斑点的平均面积
     areas = [cv2.contourArea(contour) for contour in contours]
-    if areas:
-        average_size = sum(areas) / len(areas)
-        print(f"Average spot size: {average_size}")
-    else:
-        print("No spots detected in the image")
+    average_size = sum(areas) / len(areas) if areas else 0
+
+    return average_size
 
 
-if __name__ == "__main__":
-    calculate_average_spot_size("input.jpg")
+@app.post("/analyze-spots/")
+async def upload_image(file: UploadFile):
+    # 读取上传的图像数据
+    image_data = await file.read()
+
+    # 计算斑点的平均面积
+    average_size = calculate_average_spot_size(image_data)
+
+    # 返回结果
+    return {"average_spot_size": average_size}
