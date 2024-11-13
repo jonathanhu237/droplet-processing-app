@@ -5,8 +5,10 @@ import { Input } from "./components/ui/input";
 import { Label } from "./components/ui/label";
 import { Button } from "./components/ui/button";
 
+type FileWithSpotSize = File & { averageSpotSize?: number };
+
 function App() {
-    const [files, setFiles] = useState<File[]>([]);
+    const [files, setFiles] = useState<FileWithSpotSize[]>([]);
 
     const onDrop = useCallback((acceptedFiles: File[]) => {
         setFiles((prevFiles) => [...prevFiles, ...acceptedFiles]);
@@ -27,7 +29,7 @@ function App() {
     return (
         <div className="h-screen flex flex-col items-center justify-center">
             <div
-                className="flex flex-col justify-center items-center gap-4 w-[512px] h-40 border-dashed border-2 rounded-lg"
+                className="flex flex-col justify-center items-center gap-4 w-[648px] h-44 border-dashed border-2 rounded-lg"
                 {...getRootProps()}
             >
                 {isDragActive ? (
@@ -58,7 +60,7 @@ function App() {
                     </>
                 )}
             </div>
-            <div className="mt-4 w-[512px]">
+            <div className="mt-4 w-[648px]">
                 <ul>
                     {files.map((file, index) => (
                         <li
@@ -90,6 +92,12 @@ function App() {
                                     </span>
                                 </div>
                             </div>
+                            <span className="text-sm text-muted-foreground">
+                                雾滴平均大小:{" "}
+                                {file.averageSpotSize === undefined
+                                    ? "未计算"
+                                    : file.averageSpotSize}
+                            </span>
                             <div className="ml-auto flex gap-2">
                                 <Button>计算</Button>
                                 <Button
